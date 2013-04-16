@@ -7,13 +7,13 @@ class EventMachine::SFlow::FlowSample
     
     @records = []
     
-    @sequence_number, source_id_class_value, @sampling_rate, @sample_pool, @drop_count, @input_count, @output_count, record_count = data.unpack("NNNNNNNN")
+    @sequence_number, source_id_class_value, @sampling_rate, @sample_pool, @drop_count, @input_count, @output_count = data.unpack("NNNNNNN")
     
     @source_class = source_id_class_value >> 24
     @source_value = source_id_class_value & (2 ** 24 - 1)
     
-    data.advance(32)
+    data.advance(28)
     
-    @records = data.to_flow_records!(record_count)
+    @records = data.to_flow_records!(1)
   end
 end

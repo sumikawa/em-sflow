@@ -1,5 +1,5 @@
 class EventMachine::SFlow::Datagram
-  attr_reader :version, :agent, :sub_agent_id, :datagram_sequence, :uptime, :samples
+  attr_reader :version, :agent, :sub_agent_id, :datagram_sequence, :uptime, :samples, :sample_count
   
   def initialize data
     data.extend EM::SFlow::BinaryString
@@ -19,27 +19,22 @@ class EventMachine::SFlow::Datagram
       data.advance(16)
     end
     
-    @sub_agent_id, @datagram_sequence, @uptime, sample_count = data.unpack("NNNN")
-    
-    data.advance(16)
+    @datagram_sequence, @uptime, @sample_count = data.unpack("NNN")
+    data.advance(12)
 
     sample_count.times do
-      enterprise_format, length = data.unpack("NN")
-      enterprise = enterprise_format >> 12
-      format = enterprise_format & (2 ** 12 - 1)
-      
-      data.advance(8)
+      format, = data.unpack("N")
+      data.advance(4)
+      enterprise = 0
 
-      sample_data = data.advance(length)
-      
       if enterprise == 0 && format == 1
-        @samples << EM::SFlow::FlowSample.new(sample_data)
+        @samples << EM::SFlow::FlowSample.new(data)
       elsif enterprise == 0 && format == 2  
-        @samples << EM::SFlow::CounterSample.new(sample_data)
+        # @samples << EM::SFlow::CounterSample.new(data)
       elsif enterprise == 0 && format == 3
-        @samples << EM::SFlow::ExpandedFlowSample.new(sample_data)
+        # @samples << EM::SFlow::ExpandedFlowSample.new(data)
       elsif enterprise == 0 && format == 4
-        # @samples << EM::SFlow::ExpandedCounterSample.new(sample_data)
+        # @samples << EM::SFlow::ExpandedCounterSample.new(data)
       end
     end
   end
